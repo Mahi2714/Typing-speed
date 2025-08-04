@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Typing Speed Test</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right,slategray, grey);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .container {
+      background: black;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 12px 30px white(0,0,0,0.3);
+      max-width: 700px;
+      text-align: center;
+      animation: float 4s ease-in-out infinite;
+      position: relative;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: slategray;
+      animation: floatUp 3s ease-in-out infinite;
+    }
+
+    #quote {
+      font-size: 20px;
+      margin: 20px 0;
+      padding: 15px;
+      border: 2px dashed #ccc;
+      border-radius: 10x;
+      background: slategray;
+      animation: floatSide 5s ease-in-out infinite alternate;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      font-size: 18px;
+      border-radius: 12px;
+      border: 2px solid #ccc;
+      margin-top: 10px;
+      outline: none;
+      transition: 0.3s;
+      animation: pulse 2s infinite;
+    }
+
+    textarea:focus {
+      border-color: #4CAF50;
+      box-shadow: 0 0 15px #4CAF50;
+    }
+
+    .stats {
+      color: slategrey;
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 25px;
+      background:slategrey;
+      color: black;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 18px;
+      animation: floatSide 3s infinite alternate ease-in-out;
+    }
+
+    button:hover {
+      background: slategrey;
+      transform: scale(1.1);
+    }
+
+    /* Pause Animation Class */
+    .paused {
+      animation-play-state: paused !important;
+    }
+
+    /* Keyframe Animations */
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0px); }
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+
+    @keyframes floatSide {
+      0% { transform: translateX(0px); }
+      50% { transform: translateX(15px); }
+      100% { transform: translateX(0px); }
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0px rgba(76, 175, 80, 0.4); }
+      50% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.8); }
+      100% { box-shadow: 0 0 0px rgba(76, 175, 80, 0.4); }
+    }
+
+    /* Result Popup */
+    .result-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: slategray;
+      padding: 20px 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      text-align: center;
+      animation: popup 0.6s forwards;
+      z-index: 10;
+    }
+
+    .result-popup button {
+      background: black;
+      margin-top: 15px;
+      font-size: 16px;
+      padding: 8px 18px;
+    }
+
+    @keyframes popup {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="container">
+  <h1 id="title">⌨️ Typing Speed Test</h1>
+  <p id="quote">Loading...</p>
+  <textarea id="inputArea" placeholder="Start typing here..." disabled></textarea>
+
+  <div class="stats" id="stats">
+    ⏱ Time Left: <span id="timeLeft">60</span>s |  
+    🏃‍♂️ Speed: <span id="speed">0</span> WPM |  
+    🎯 Accuracy: <span id="accuracy">0</span>%
+  </div>
+
+  <button id="startBtn" onclick="startGame()">Start Test</button>
+</div>
+
+<script>
+  const quotes = [
+    "The quick brown fox jumps over the lazy dog",
+    "Typing fast requires focus and accuracy",
+    "JavaScript makes web pages interactive and dynamic",
+    "Consistency is the key to improving your typing speed",
+    "Learning to type fast can save a lot of time"
+  ];
+
+  let time = 60;
+  let timer;
+  let quote = "";
+  let typedChars = 0;
+  let correctChars = 0;
+  let isGameRunning = false;
+
+  const quoteDisplay = document.getElementById("quote");
+  const inputArea = document.getElementById("inputArea");
+  const timeLeft = document.getElementById("timeLeft");
+  const speedEl = document.getElementById("speed");
+  const accuracyEl = document.getElementById("accuracy");
+  const container = document.getElementById("container");
+  const stats = document.getElementById("stats");
+  const title = document.getElementById("title");
+
+  function getRandomQuote() {
+    return quotes[Math.floor(Math.random() * quotes.length)];
+  }
+
+  function startGame() {
+    if (isGameRunning) return;
+    isGameRunning = true;
+
+    // Reset
+    time = 60;
+    typedChars = 0;
+    correctChars = 0;
+    inputArea.value = "";
+    inputArea.disabled = false;
+    inputArea.focus();
+    timeLeft.textContent = 60;
+    speedEl.textContent = 0;
+    accuracyEl.textContent = 0;
+
+    quote = getRandomQuote();
+    quoteDisplay.textContent = quote;
+
+    // Remove old popup if exists
+    const oldPopup = document.querySelector(".result-popup");
+    if (oldPopup) oldPopup.remove();
+
+    timer = setInterval(updateTimer, 1000);
+  }
+
+  function updateTimer() {
+    time--;
+    timeLeft.textContent = time;
+
+    if (time <= 0) {
+      clearInterval(timer);
+      endGame();
+    }
+  }
+
+  function endGame() {
+    isGameRunning = false;
+    inputArea.disabled = true;
+
+    let wpm = Math.round((typedChars / 5));
+    let accuracy = Math.round((correctChars / typedChars) * 100) || 0;
+    speedEl.textContent = wpm;
+    accuracyEl.textContent = accuracy;
+
+    resumeAnimations();
+
+    // Result popup
+    const popup = document.createElement("div");
+    popup.classList.add("result-popup");
+    popup.innerHTML = `<h2>Time's up!</h2>
+      <p>🏃‍♂️ Speed: ${wpm} WPM</p>
+      <p>🎯 Accuracy: ${accuracy}%</p>
+      <button onclick="startGame()">Play Again</button>`;
+    document.body.appendChild(popup);
+  }
+
+  inputArea.addEventListener("input", () => {
+    if (!isGameRunning) return;
+    pauseAnimations(); // Stop floating while typing
+
+    const typedText = inputArea.value;
+    typedChars = typedText.length;
+
+    let correctCount = 0;
+    for (let i = 0; i < typedText.length; i++) {
+      if (typedText[i] === quote[i]) correctCount++;
+    }
+    correctChars = correctCount;
+
+    let timeSpent = 60 - time;
+    let wpm = timeSpent > 0 ? Math.round((typedChars / 5) / (timeSpent/60)) : 0;
+    let accuracy = Math.round((correctChars / typedChars) * 100) || 0;
+
+    speedEl.textContent = wpm;
+    accuracyEl.textContent = accuracy;
+  });
+
+  // Pause and Resume animations
+  function pauseAnimations() {
+    container.classList.add("paused");
+    quoteDisplay.classList.add("paused");
+    stats.classList.add("paused");
+    title.classList.add("paused");
+  }
+
+  function resumeAnimations() {
+    container.classList.remove("paused");
+    quoteDisplay.classList.remove("paused");
+    stats.classList.remove("paused");
+    title.classList.remove("paused");
+  }
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
